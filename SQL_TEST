@@ -1,0 +1,2 @@
+select * from db_test
+where coulmn_1 >= 60 and coulmn_1 = 'Pet'
