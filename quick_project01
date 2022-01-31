@@ -1,0 +1,109 @@
+
+-- Drop v případě existence tabulek
+
+DROP TABLE EMPLOYEES;
+DROP TABLE JOB_HISTORY;
+DROP TABLE JOBS;
+DROP TABLE DEPARTMENTS;
+DROP TABLE LOCATIONS;
+
+CREATE TABLE EMPLOYEES 
+(
+    EMP_ID CHAR(9) NOT NULL,
+    F_NAME VARCHAR(15) NOT NULL,
+    L_NAME VARCHAR(15) NOT NULL,
+    SSN CHAR(9),
+    B_DATE DATE,
+    SEX CHAR,
+    ADDRESS VARCHAR(30),
+    JOB_ID CHAR(9),
+    SALARY DECIMAL(10,2),
+    MANAGER_ID CHAR(9),
+    DEP_ID CHAR(9) NOT NULL,
+    PRIMARY KEY (EMP_ID)
+);
+
+CREATE TABLE JOB_HISTORY 
+(
+    EMPL_ID CHAR(9) NOT NULL,
+    START_DATE DATE,
+    JOBS_ID CHAR(9) NOT NULL,
+    DEPT_ID CHAR(9),
+    PRIMARY KEY (EMPL_ID,JOBS_ID)
+);
+
+CREATE TABLE JOBS 
+(
+    JOB_IDENT CHAR(9) NOT NULL,
+    JOB_TITLE VARCHAR(15) ,
+    MIN_SALARY DECIMAL(10,2),
+    MAX_SALARY DECIMAL(10,2),
+    PRIMARY KEY (JOB_IDENT)
+);
+
+CREATE TABLE DEPARTMENTS 
+(
+    DEPT_ID_DEP CHAR(9) NOT NULL,
+    DEP_NAME VARCHAR(15),
+    MANAGER_ID CHAR(9),
+    LOC_ID CHAR(9),
+    PRIMARY KEY (DEPT_ID_DEP)
+);
+
+CREATE TABLE LOCATIONS 
+(
+LOCT_ID CHAR(9) NOT NULL,
+DEP_ID_LOC CHAR(9) NOT NULL,
+PRIMARY KEY (LOCT_ID,DEP_ID_LOC)
+);
+
+-- vyhledat obecně dobré ohodnocení při kratším působení
+
+SELECT e.f_name, e.l_name, e.salary, j.start_date FROM employees e
+INNER JOIN job_history j
+ON e.emp_id = j.empl_id
+WHERE e.salary >= 70000 AND start_date > '2018-01-01'; 
+
+-- průměrná výplata u jednotlivých oddělení
+
+SELECT d.dep_name, AVG(CAST(e.salary AS INT)) AS avg_dep_salary FROM employees e
+INNER JOIN departments d
+ON e.dep_id = d.dept_id_dep
+GROUP BY d.dep_name ORDER BY AVG(e.salary) DESC;
+
+-- zaměstnanci, jejichž výplata je méně než 80 % z maxima pro danou pozici a pracují zde déle než 5 let
+
+SELECT e.f_name, e.l_name FROM EMPLOYEES e
+INNER JOIN JOB_HISTORY jh
+ON e.emp_id = jh.empl_id
+INNER JOIN JOBS j
+ON jh.jobs_id = j.job_ident 
+WHERE e.salary/j.max_salary*100 < j.max_salary/j.max_salary*80 
+AND jh.start_date < '2017-01-01';
+
+-- nástup nového zaměstnance (zatím v tabulce employees), úprava stávajícího
+
+INSERT INTO employees
+VALUES ('E1011', 'Anna', 'Wall', '123498', '1989-05-12', 'M', '291 Aurora,Geneva', '300', '40000', '3002', '5'); 
+
+UPDATE employees
+SET address = '565 Carrot Oak', salary = '80000'
+WHERE emp_id = 'E1009';
+
+-- poradenství pro mladé?
+
+SELECT f_name, l_name,
+CASE 
+WHEN ADDRESS LIKE '%Geneva%' AND salary BETWEEN 75000 AND 100000 THEN 'Na skromné žití to vystačí.'
+WHEN ADDRESS LIKE '%Naperville%' AND salary >= 55000 THEN 'Je čas pořídit si vlastní park.'
+ELSE 'Pojďte se poradit, ať už v nouzi či přebytku.' END AS co_s_penezi
+FROM employees
+WHERE b_date > '1985-01-01';
+
+-- úklid
+
+DROP TABLE EMPLOYEES;
+DROP TABLE JOB_HISTORY;
+DROP TABLE JOBS;
+DROP TABLE DEPARTMENTS;
+DROP TABLE LOCATIONS;
